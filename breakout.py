@@ -1,6 +1,6 @@
 import pygame, sys, math
 
-pygame.init()
+
 
 #set the FPS
 FPS = 30
@@ -25,6 +25,11 @@ YMARGIN = 80 #margin from the top in pixels
 WHITE = (255,255,255)
 BUMPERWIDTH = 125
 BUMPERHEIGHT = 35
+#shorter constants so I don't have to type the strings
+DR = 'downright'
+DL = 'downleft'
+UR = 'upright'
+UL = 'upleft'
 
 #this method checks to see whether the ball has hit the bumper
 def hitBumper(ballx, bally,bumperx,bumpery,direction):
@@ -88,89 +93,94 @@ def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     ballRect = pygame.Rect(ballx,bally,BALLWIDTH,BALLHEIGHT)
     #if the ball is going down and to the right
     #it can hit the left or the top
-    if direction == 'downright':
+    if direction == DR:
         if topDist(ballRect,blockRect) >= rightDist(ballRect,blockRect):
-            direction = 'upright'
+            direction = UR
         else:
-            direction = 'downleft'
+            direction = DL
     #if the ball is going down and to the left
     #it can hit the right or the top
-    elif direction == 'downleft':
+    elif direction == DL:
         if topDist(ballRect,blockRect) >= leftDist(ballRect,blockRect):
-            direction = 'upleft'
+            direction = UL
         else:
-            direction = 'downright'
+            direction = DR
     #if the ball is going up and to the right
     #it can hit the left or the bottom
-    elif direction == 'upright':
+    elif direction == UR:
         if bottomDist(ballRect,blockRect) >= leftDist(ballRect,blockRect):
-            direction = 'downright'
+            direction = DR
         else:
-            direction = 'upleft'
+            direction = UL
     #if the ball is going up and to the left
     #it can hit the right or the bottom
-    elif direction == 'upleft':
+    elif direction == UL:
         if bottomDist(ballRect,blockRect) >= rightDist(ballRect,blockRect):
-            direction = 'downleft'
+            direction = DL
         else:
-            direction = 'upright'
+            direction = UR
     return direction
 
 def moveOrDirectionChange(ballx, bally, bumperx, bumpery, direction):
     if hitBumper(ballx, bally, bumperx, bumpery,direction):
-        if direction == 'downright':
-            direction = 'upright'
-        elif direction == 'downleft':
-            direction = 'upleft'
-    if direction== 'downright':
+        if direction == DR:
+            direction = UR
+        elif direction == DL:
+            direction = UL
+    if direction== DR:
         ballx+=speed
         bally+=speed
         if ballx>=620:
-            direction='downleft'
+            direction=DL
         elif bally>=460:
-            direction='upright'
-    elif direction=='downleft':
+            direction=UR
+    elif direction==DL:
         ballx-=speed
         bally+=speed
         if ballx<=-5:
-            direction='downright'
+            direction=DR
         elif bally>=460:
-            direction='upleft'
-    elif direction== 'upright':
+            direction=UL
+    elif direction== UR:
         ballx+=speed
         bally-=speed
         if ballx>=620:
-            direction='upleft'
+            direction=UL
         elif bally<=-5:
-            direction='downright'
-    elif direction== 'upleft':
+            direction=DR
+    elif direction== UL:
         ballx-=speed
         bally-=speed
         if ballx<=-5:
-            direction='upright'
+            direction=UR
         elif bally<=-5:
-            direction='downleft'
+            direction=DL
     
     return ballx, bally, direction
 
-def main():
-    global DISPLAYSURF
-    global speed
-    speed = 5
-    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH,WINDOWHEIGHT))
+def resetBoard():
+    blocks = generateBlocks()
+    drawBlocks(blocks)
+    return blocks
+
+def runGame():
+    score = 0
     BACKGROUND = pygame.image.load('breakout_bg.png')
+    ballImg = pygame.image.load('ball.png')
+    bumperImg = pygame.image.load('bumper.png')
+    ballx = 320
+    bally = 360
+    DISPLAYSURF.blit(ballImg, (ballx,bally))
+    direction = 'downleft'
+    start = False
     DISPLAYSURF.blit(BACKGROUND,(0,0))
     #define the beginning ball values
     ballImg = pygame.image.load('ball.png')
-    ballx = 320
-    bally = 360
-    direction = 'downleft'
-    start = False
+    bumperImg = pygame.image.load('bumper.png')
     #add the ball to the screen
     DISPLAYSURF.blit(ballImg, (ballx,bally))
-    
+
     #define the beginning bumper values
-    bumperImg = pygame.image.load('bumper.png')
     bumperx = 320
     bumpery = 430
     #add the bumper to the screen
@@ -178,6 +188,7 @@ def main():
 
     #define the beginning block values
     blocks = generateBlocks()
+    blocksDestroyed = 0
     #draw blocks to the screen
     drawBlocks(blocks)
     
@@ -187,6 +198,11 @@ def main():
             blockHitY, blockHitX, direction = hitBlock(ballx,bally,blocks,direction)
             if blockHitX>=0 and blockHitY>=0:
                 blocks[blockHitY][blockHitX] = False
+                blocksDestroyed+=1
+                score += 10
+                if blocksDestroyed >= BLOCKSROW*BLOCKSCOLUMN:
+                    blocks = resetBoard()
+                    blocksDestroyed = 0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -211,9 +227,18 @@ def main():
         DISPLAYSURF.blit(bumperImg,(bumperx,bumpery))
         DISPLAYSURF.blit(ballImg, (ballx,bally))
         drawBlocks(blocks)
-            
         pygame.display.update()
         fpsClock.tick(FPS)
+
+def main():
+    pygame.init()
+    global DISPLAYSURF
+    global speed
+    speed = 5
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH,WINDOWHEIGHT))
+    while True:
+        runGame()
+    
 
 if __name__ == '__main__':
     main()
