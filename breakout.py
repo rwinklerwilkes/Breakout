@@ -88,6 +88,21 @@ def topDist(ballRect, blockRect):
 def bottomDist(ballRect, blockRect):
     return math.fabs(blockRect.bottom-ballRect.bottom)
 
+def gameOver():
+    gameOverFont = pygame.font.Font('freesansbold.ttf',120)
+    gameSurf = gameOverFont.render('Game', True, WHITE)
+    overSurf = gameOverFont.render('Over', True, WHITE)
+    gameRect = gameSurf.get_rect()
+    overRect = overSurf.get_rect()
+    gameRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4)
+    #the +30 will leave 20 pixels between "Game" and "Over"
+    overRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4 + gameRect.height + 30)
+    DISPLAYSURF.blit(gameSurf,gameRect)
+    DISPLAYSURF.blit(overSurf,overRect)
+    pygame.display.update()
+    pygame.time.wait(1000)
+    return
+
 def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     blockRect = pygame.Rect(leftBox,topBox,BLOCKWIDTH,BLOCKHEIGHT)
     ballRect = pygame.Rect(ballx,bally,BALLWIDTH,BALLHEIGHT)
@@ -122,6 +137,9 @@ def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     return direction
 
 def moveOrDirectionChange(ballx, bally, bumperx, bumpery, direction):
+    #returns the x and y positions of the ball, and the direction
+    #if the y coordinate of the ball hits the bottom of the screen
+    #then the method returns -1
     if hitBumper(ballx, bally, bumperx, bumpery,direction):
         if direction == DR:
             direction = UR
@@ -132,15 +150,17 @@ def moveOrDirectionChange(ballx, bally, bumperx, bumpery, direction):
         bally+=speed
         if ballx>=620:
             direction=DL
+        #if the y coordinate of the ball is this far, it should be game over
         elif bally>=460:
-            direction=UR
+            direction=-1
     elif direction==DL:
         ballx-=speed
         bally+=speed
         if ballx<=-5:
             direction=DR
         elif bally>=460:
-            direction=UL
+        #if the y coordinate of the ball is this far, it should be game over
+            direction=-1
     elif direction== UR:
         ballx+=speed
         bally-=speed
@@ -195,6 +215,10 @@ def runGame():
     while True:
         if start:
             ballx,bally,direction = moveOrDirectionChange(ballx,bally,bumperx,bumpery,direction)
+            #if the ball hit the bottom of the screen, game over
+            if direction == -1:
+                gameOver()
+                return
             blockHitY, blockHitX, direction = hitBlock(ballx,bally,blocks,direction)
             if blockHitX>=0 and blockHitY>=0:
                 blocks[blockHitY][blockHitX] = False
