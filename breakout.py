@@ -1,6 +1,4 @@
-import pygame, sys, math
-
-
+import pygame, sys, math, time
 
 #set the FPS
 FPS = 30
@@ -101,6 +99,41 @@ def gameOver():
     DISPLAYSURF.blit(overSurf,overRect)
     pygame.display.update()
     pygame.time.wait(1000)
+    return
+
+def drugScreen():
+    #alpha info from:
+    #http://stackoverflow.com/questions/12879225/pygame-applying-transparency-to-an-image-with-alpha
+    DRUGS = pygame.image.load("drugs.png").convert(24)
+    DRUGS.set_alpha(0)
+    FADEDURATION = 2.0 #2 second fade in
+    HOLDDURATION = 3 #3 second hold at the opaque screen
+    startTime = time.clock()
+    #fade in
+    ratio = 0.0 #alpha value as a float, ranges from 0 to 1
+    while ratio < 1.0:
+        currentTime = time.clock()
+        ratio = (currentTime-startTime)/FADEDURATION
+        if ratio > 1.0: #oops, went too far!
+            ratio = 1.0
+        DRUGS.set_alpha(ratio*255)
+        DISPLAYSURF.fill(WHITE)
+        DISPLAYSURF.blit(DRUGS,(0,0))
+        pygame.display.update()
+    #wait for a couple seconds
+    pygame.time.wait(HOLDDURATION*1000)
+    #then fade out
+    startTime = time.clock()
+    ratio = 0.0 #alpha value as a float, ranges from 0 to 1
+    while ratio < 1.0:
+        currentTime = time.clock()
+        ratio = (currentTime-startTime)/FADEDURATION
+        if ratio > 1.0: #oops, went too far!
+            ratio = 1.0
+        DRUGS.set_alpha((1.0-ratio)*255)
+        DISPLAYSURF.fill(WHITE)
+        DISPLAYSURF.blit(DRUGS,(0,0))
+        pygame.display.update()
     return
 
 def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
@@ -260,6 +293,7 @@ def main():
     global speed
     speed = 5
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH,WINDOWHEIGHT))
+    drugScreen()
     while True:
         runGame()
     
