@@ -17,6 +17,7 @@ BLOCKWIDTH = 35 #sprite is 40 pixels by 40 pixels
 BLOCKHEIGHT = 35
 BALLWIDTH = 25
 BALLHEIGHT = 25
+SCOREWIDTH = 100
 #margin from the sides in pixels
 XMARGIN = int((WINDOWWIDTH - (BLOCKSROW*BLOCKWIDTH))/2)
 YMARGIN = 80 #margin from the top in pixels
@@ -89,6 +90,7 @@ def bottomDist(ballRect, blockRect):
     return math.fabs(blockRect.bottom-ballRect.bottom)
 
 def gameOver():
+    '''
     gameOverFont = pygame.font.Font('freesansbold.ttf',120)
     gameSurf = gameOverFont.render('Game', True, WHITE)
     overSurf = gameOverFont.render('Over', True, WHITE)
@@ -101,6 +103,17 @@ def gameOver():
     DISPLAYSURF.blit(overSurf,overRect)
     pygame.display.update()
     pygame.time.wait(3000)
+    '''
+    GAME = pygame.image.load("Game.png")
+    OVER = pygame.image.load("over.png")
+    game_rect = GAME.get_rect()
+    game_rect.midtop = (WINDOWWIDTH/2, WINDOWHEIGHT/4)
+    over_rect = OVER.get_rect()
+    over_rect.midtop = (WINDOWWIDTH/2, WINDOWHEIGHT/4 + game_rect.height + 15)
+    DISPLAYSURF.blit(GAME,game_rect)
+    DISPLAYSURF.blit(OVER,over_rect)
+    pygame.display.update()
+    pygame.time.wait(3000)
     return
 
 def drugScreen():
@@ -108,8 +121,8 @@ def drugScreen():
     #http://stackoverflow.com/questions/12879225/pygame-applying-transparency-to-an-image-with-alpha
     DRUGS = pygame.image.load("drugs.png").convert(24)
     DRUGS.set_alpha(0)
-    FADEDURATION = 1.0 #2 second fade in
-    HOLDDURATION = 2 #3 second hold at the opaque screen
+    FADEDURATION = 1.0 #1 second fade in
+    HOLDDURATION = 2 #2 second hold at the opaque screen
     start_time = time.clock()
     #fade in
     ratio = 0.0 #alpha value as a float, ranges from 0 to 1
@@ -270,6 +283,8 @@ def runGame():
     BACKGROUND = pygame.image.load('breakout_bg.png')
     ballImg = pygame.image.load('ball.png')
     bumperImg = pygame.image.load('bumper.png')
+    score_image = pygame.image.load('score.png')
+    score_font = pygame.font.Font('freesansbold.ttf',37)
     ballx = 320
     bally = 360
     DISPLAYSURF.blit(ballImg, (ballx,bally))
@@ -332,6 +347,11 @@ def runGame():
         DISPLAYSURF.blit(BACKGROUND,(0,0))
         DISPLAYSURF.blit(bumperImg,(bumperx,bumpery))
         DISPLAYSURF.blit(ballImg, (ballx,bally))
+        DISPLAYSURF.blit(score_image, (440,20))
+        score_surface = score_font.render(str(score), True, WHITE)
+        score_rect = score_surface.get_rect()
+        score_rect.topleft = (445+SCOREWIDTH, 25)
+        DISPLAYSURF.blit(score_surface,score_rect)
         drawBlocks(blocks)
         pygame.display.update()
         fpsClock.tick(FPS)
