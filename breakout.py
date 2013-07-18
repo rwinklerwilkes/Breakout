@@ -23,6 +23,8 @@ YMARGIN = 80 #margin from the top in pixels
 WHITE = (255,255,255)
 BUMPERWIDTH = 125
 BUMPERHEIGHT = 35
+POINTERWIDTH = 40
+POINTERHEIGHT = 40
 #shorter constants so I don't have to type the strings
 DR = 'downright'
 DL = 'downleft'
@@ -98,7 +100,7 @@ def gameOver():
     DISPLAYSURF.blit(gameSurf,gameRect)
     DISPLAYSURF.blit(overSurf,overRect)
     pygame.display.update()
-    pygame.time.wait(1000)
+    pygame.time.wait(3000)
     return
 
 def drugScreen():
@@ -106,16 +108,17 @@ def drugScreen():
     #http://stackoverflow.com/questions/12879225/pygame-applying-transparency-to-an-image-with-alpha
     DRUGS = pygame.image.load("drugs.png").convert(24)
     DRUGS.set_alpha(0)
-    FADEDURATION = 2.0 #2 second fade in
-    HOLDDURATION = 3 #3 second hold at the opaque screen
-    startTime = time.clock()
+    FADEDURATION = 1.0 #2 second fade in
+    HOLDDURATION = 2 #3 second hold at the opaque screen
+    start_time = time.clock()
     #fade in
     ratio = 0.0 #alpha value as a float, ranges from 0 to 1
     while ratio < 1.0:
-        currentTime = time.clock()
-        ratio = (currentTime-startTime)/FADEDURATION
+        current_time = time.clock()
+        ratio = (current_time-start_time)/FADEDURATION
         if ratio > 1.0: #oops, went too far!
             ratio = 1.0
+        #alpha value - 0 is completely transparent, 255 completely opaque
         DRUGS.set_alpha(ratio*255)
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(DRUGS,(0,0))
@@ -123,18 +126,64 @@ def drugScreen():
     #wait for a couple seconds
     pygame.time.wait(HOLDDURATION*1000)
     #then fade out
-    startTime = time.clock()
+    start_time = time.clock()
     ratio = 0.0 #alpha value as a float, ranges from 0 to 1
     while ratio < 1.0:
-        currentTime = time.clock()
-        ratio = (currentTime-startTime)/FADEDURATION
+        current_time = time.clock()
+        ratio = (current_time-start_time)/FADEDURATION
         if ratio > 1.0: #oops, went too far!
             ratio = 1.0
+        #alpha value - 0 is completely transparent, 255 completely opaque
         DRUGS.set_alpha((1.0-ratio)*255)
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(DRUGS,(0,0))
         pygame.display.update()
     return
+
+def startScreen():
+    INTRO = pygame.image.load("breakout_intro.png")
+    IND = pygame.image.load("pointer.png")
+    START = 0
+    QUIT = 1
+    #PLACES defines the two coordinate positions that the pointer can be in
+    #the first tuple is the Start Game position, the second tuple is the Exit position
+    PLACES = [(220,265),(220,320)]
+    #visible indicates if the pointer is currently visible or not
+    visible = True
+    #pos indicates which item the pointer is by, starting with 0
+    position = 0
+    #this time will control whether the pointer is visible or not
+    start_time = pygame.time.get_ticks()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                #we don't want to go past the possible position values
+                #so this limits it to 0 or 1
+                if event.key==pygame.K_DOWN:
+                    position = (position+1)%2
+                elif event.key==pygame.K_UP:
+                    position = (position-1)%2
+                elif event.key==pygame.K_RETURN:
+                    #if they want to start, return to main
+                    if position==START:
+                        return
+                    #if they want to quit, let them!
+                    elif position==QUIT:
+                        pygame.quit()
+                        sys.exit()
+        current_time = pygame.time.get_ticks()
+        if (current_time - start_time) >= 500:
+            visible = not visible
+            start_time = current_time
+        DISPLAYSURF.fill(WHITE)
+        DISPLAYSURF.blit(INTRO,(0,0))
+        if visible:
+            DISPLAYSURF.blit(IND,PLACES[position])
+        pygame.display.update()
+                
 
 def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     blockRect = pygame.Rect(leftBox,topBox,BLOCKWIDTH,BLOCKHEIGHT)
@@ -295,6 +344,7 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH,WINDOWHEIGHT))
     drugScreen()
     while True:
+        startScreen()
         runGame()
     
 
