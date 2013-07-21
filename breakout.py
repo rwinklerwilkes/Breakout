@@ -1,4 +1,14 @@
-import pygame, sys, math, time
+import pygame
+import sys
+import math
+import time
+import datetime
+import os
+#cPickle is used to serialize the high scores
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 #set the FPS
 FPS = 30
@@ -9,28 +19,42 @@ LEFT = 1
 RIGHT = 3
 
 #set up the window, set the background
+BACKGROUND = pygame.image.load('breakout_bg.png')
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
 BLOCKSROW = 10 #number of blocks in a row
 BLOCKSCOLUMN = 5 #number of blocks in a column
 BLOCKWIDTH = 35 #sprite is 40 pixels by 40 pixels
-BLOCKHEIGHT = 35
-BALLWIDTH = 25
-BALLHEIGHT = 25
-SCOREWIDTH = 100
+BLOCKHEIGHT = 35 #height of the block
+BALLWIDTH = 25 #width of the ball
+BALLHEIGHT = 25 #height of the ball
+SCOREWIDTH = 100 #width of the score box
+SCORES_FILE = "hs.dat" #file in which to store high scores
+HSROWS = 10 #number of rows of high scores
+HSHEIGHT = 40 #height in pixels of each letter in the high score
+HSMARGIN = 5 #margin between scores
+HSGAP = 20 #gap between name/score/date
 #margin from the sides in pixels
 XMARGIN = int((WINDOWWIDTH - (BLOCKSROW*BLOCKWIDTH))/2)
 YMARGIN = 80 #margin from the top in pixels
 WHITE = (255,255,255)
-BUMPERWIDTH = 125
-BUMPERHEIGHT = 35
-POINTERWIDTH = 40
-POINTERHEIGHT = 40
+BUMPERWIDTH = 125 #width of the bumper
+BUMPERHEIGHT = 35 #height of the bumper
+POINTERWIDTH = 40 #width of the pointer at the start screen
+POINTERHEIGHT = 40 #height of the pointer at the start screen
 #shorter constants so I don't have to type the strings
 DR = 'downright'
 DL = 'downleft'
 UR = 'upright'
 UL = 'upleft'
+
+#Dict to match alphanumeric characters to their filenames
+ALPHA = {}
+for x in range(65,91):
+    a = str(chr(x))
+    ALPHA[a] = 'Alphabet/' + a + '.png'
+for x in range(10):
+    ALPHA[str(x)] = 'Alphabet/' + str(x) + '.png'
 
 #this method checks to see whether the ball has hit the bumper
 def hitBumper(ballx, bally,bumperx,bumpery,direction):
@@ -123,6 +147,8 @@ def drugScreen():
     DRUGS.set_alpha(0)
     FADEDURATION = 1.0 #1 second fade in
     HOLDDURATION = 2 #2 second hold at the opaque screen
+    #I have to change this method to use pygame's timing function
+    #in order to keep consistent with other code
     start_time = time.clock()
     #fade in
     ratio = 0.0 #alpha value as a float, ranges from 0 to 1
@@ -196,7 +222,93 @@ def startScreen():
         if visible:
             DISPLAYSURF.blit(IND,PLACES[position])
         pygame.display.update()
-                
+
+def highScoreScreen(score):
+    DISPLAYSURF.fill(WHITE)
+    DISPLAYSURF.blit(BACKGROUND,(0,0))
+    hsList = readHighScores()
+    ind = checkScore(hsList,score)
+    for x in range(HSROWS):
+        writeScore(hsList[x],x)
+        pygame.display.update()
+    if ind>=0:
+        #prompt for initials
+        for x in range(HSROWS):
+            writeScore(hsList[x],x)
+        pygame.display.update()
+        #update the list
+        #display the scores
+        #write the new scores
+        #return
+    pygame.time.wait(5000)
+    return
+
+def writeScore(score, row):
+    dash = pygame.image.load("Alphabet/dash.png")
+    #deal with the initials first
+    y = (row+1)*HSMARGIN + row*HSHEIGHT
+    x = 10 #start 10 pixels from the left part of the screen
+    for z in score[0]:
+        letter = pygame.image.load(ALPHA[z])
+        DISPLAYSURF.blit(letter,(x,y))
+        x += (HSHEIGHT-5)
+    x+=60
+    counter = 0
+    for z in str(score[1]):
+        number = pygame.image.load(ALPHA[z])
+        DISPLAYSURF.blit(number,(x,y))
+        counter+=1
+        x += (HSHEIGHT-5)
+    if counter<5:
+        x+= (HSHEIGHT-5)*(5-counter)
+    x+=30
+    #Uppercase because I only have uppercase letters
+    for z in score[2].upper():
+        if z==' ':
+            DISPLAYSURF.blit(dash,(x,y+3))
+            x+=10
+        else:
+            letter = pygame.image.load(ALPHA[z])
+            DISPLAYSURF.blit(letter,(x,y))
+            x+= (HSHEIGHT-15)
+    return
+
+def readHighScores():
+    #if the file doesn't yet exist, create it
+    #the high scores will be stored in CSV, and will be passed as
+    #a list of tuples, each containing 3 initials and a date
+    if not os.path.isfile(SCORES_FILE):
+        today_date = datetime.date.today()
+        hs_list = [("AEB","1000",today_date.strftime("%m %d %Y")) for x in range(10)]
+        writeHighScores(hs_list)
+        return hs_list
+    with open(SCORES_FILE, 'rb') as f:
+        scores = pickle.load(f)
+    return scores
+
+
+def writeHighScores(scores):
+    with open(SCORES_FILE,'wb') as f:
+        pickle.dump(scores,f)
+
+def checkScore(high_scores, score):
+    #this checks to see if the user got a high score
+    #scores are stored as a string in the 2nd spot in the tuple
+    #in this method, score will be an integer
+    hs = -1
+    #local copy of the scores, don't want to mess anything up
+    lowest = None
+    lowest = min(high_scores,key=lambda item: int(item[1]))
+    if score > int(lowest[1]):
+        hs = index(lowest)
+    return hs
+
+def updateScores(high_scores, score, index):
+    temp_high_scores = high_scores[:]
+    temp_high_scores.insert(index,score)
+    #if we added one to the list, we want the list to stay as 10
+    temp_high_scores.pop()
+    return temp_high_scores
 
 def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     blockRect = pygame.Rect(leftBox,topBox,BLOCKWIDTH,BLOCKHEIGHT)
@@ -280,11 +392,10 @@ def resetBoard():
 
 def runGame():
     score = 0
-    BACKGROUND = pygame.image.load('breakout_bg.png')
     ballImg = pygame.image.load('ball.png')
     bumperImg = pygame.image.load('bumper.png')
-    score_image = pygame.image.load('score.png')
-    score_font = pygame.font.Font('freesansbold.ttf',37)
+    scoreImage = pygame.image.load('score.png')
+    scoreFont = pygame.font.Font('freesansbold.ttf',37)
     ballx = 320
     bally = 360
     DISPLAYSURF.blit(ballImg, (ballx,bally))
@@ -315,6 +426,7 @@ def runGame():
             #if the ball hit the bottom of the screen, game over
             if direction == -1:
                 gameOver()
+                highScoreScreen(score)
                 return
             blockHitY, blockHitX, direction = hitBlock(ballx,bally,blocks,direction)
             if blockHitX>=0 and blockHitY>=0:
@@ -342,16 +454,16 @@ def runGame():
                 #the 63 centers it - the sprite is approximately 125 pixels wide
                 else:
                     bumperx = tempx-(BUMPERWIDTH/2)
-
+        
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(BACKGROUND,(0,0))
         DISPLAYSURF.blit(bumperImg,(bumperx,bumpery))
         DISPLAYSURF.blit(ballImg, (ballx,bally))
-        DISPLAYSURF.blit(score_image, (440,20))
-        score_surface = score_font.render(str(score), True, WHITE)
-        score_rect = score_surface.get_rect()
-        score_rect.topleft = (445+SCOREWIDTH, 25)
-        DISPLAYSURF.blit(score_surface,score_rect)
+        DISPLAYSURF.blit(scoreImage, (440,20))
+        scoreSurface = scoreFont.render(str(score), True, WHITE)
+        scoreRect = scoreSurface.get_rect()
+        scoreRect.topleft = (445+SCOREWIDTH, 25)
+        DISPLAYSURF.blit(scoreSurface,scoreRect)
         drawBlocks(blocks)
         pygame.display.update()
         fpsClock.tick(FPS)
