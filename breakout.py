@@ -223,23 +223,54 @@ def startScreen():
             DISPLAYSURF.blit(IND,PLACES[position])
         pygame.display.update()
 
+def fix_initials(hsList, userScore,ind):
+    counter = 0
+    for x in hsList[:ind]:
+        writeScore(x,counter)
+        counter+=1
+        #using # as a sentinel, I just want to write empty spaces for now
+    writeScore(userScore,ind)
+    counter+=1
+    for x in hsList[ind+1:-1]:
+        writeScore(x,counter)
+        counter+=1
+    pygame.display.update()
+
 def highScoreScreen(score):
     DISPLAYSURF.fill(WHITE)
     DISPLAYSURF.blit(BACKGROUND,(0,0))
     hsList = readHighScores()
     ind = checkScore(hsList,score)
-    for x in range(HSROWS):
-        writeScore(hsList[x],x)
-        pygame.display.update()
+    today_date = datetime.date.today().strftime("%m %d %Y")
     if ind>=0:
-        #prompt for initials
-        for x in range(HSROWS):
-            writeScore(hsList[x],x)
-        pygame.display.update()
+        fix_initials(hsList,("###",score,today_date), ind)
+        #there's a bug after this point, somewhere
+        #I can't figure out where though. it doesn't seem to be taking
+        #user input or displaying it
+        #display a cursor
+        initials = ""
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.unicode.isalpha() and len(initials)<3:
+                        return
+                        initials += event.unicode
+                    if event.key==pygame.K_RETURN:
+                        break
+            counter = 0
+            while len(initials)<3:
+                initials+="#"
+                counter+=1
+            fix_initials(hsList, (initials.upper(), score, today_date), ind)
+            initials = initials[-counter:]
         #update the list
         #display the scores
         #write the new scores
         #return
+    else:
+        for x in range(HSROWS):
+            writeScore(hsList[x],x)
+        pygame.display.update()
     pygame.time.wait(5000)
     return
 
@@ -249,9 +280,13 @@ def writeScore(score, row):
     y = (row+1)*HSMARGIN + row*HSHEIGHT
     x = 10 #start 10 pixels from the left part of the screen
     for z in score[0]:
-        letter = pygame.image.load(ALPHA[z])
-        DISPLAYSURF.blit(letter,(x,y))
-        x += (HSHEIGHT-5)
+        #dealing with displaying the score before initials are typed
+        if z=="#":
+            x+=(HSHEIGHT-5)
+        else:
+            letter = pygame.image.load(ALPHA[z])
+            DISPLAYSURF.blit(letter,(x,y))
+            x += (HSHEIGHT-5)
     x+=60
     counter = 0
     for z in str(score[1]):
@@ -300,7 +335,7 @@ def checkScore(high_scores, score):
     lowest = None
     lowest = min(high_scores,key=lambda item: int(item[1]))
     if score > int(lowest[1]):
-        hs = index(lowest)
+        hs = high_scores.index(lowest)
     return hs
 
 def updateScores(high_scores, score, index):
@@ -391,7 +426,7 @@ def resetBoard():
     return blocks
 
 def runGame():
-    score = 0
+    score = 1000
     ballImg = pygame.image.load('ball.png')
     bumperImg = pygame.image.load('bumper.png')
     scoreImage = pygame.image.load('score.png')
