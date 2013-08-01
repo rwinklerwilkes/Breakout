@@ -223,6 +223,7 @@ def startScreen():
             DISPLAYSURF.blit(IND,PLACES[position])
         pygame.display.update()
 
+#fix_initials writes the list of initials to the screen
 def fix_initials(hsList, userScore,ind):
     counter = 0
     for x in hsList[:ind]:
@@ -234,7 +235,6 @@ def fix_initials(hsList, userScore,ind):
     for x in hsList[ind+1:-1]:
         writeScore(x,counter)
         counter+=1
-    pygame.display.update()
 
 def highScoreScreen(score):
     DISPLAYSURF.fill(WHITE)
@@ -244,25 +244,32 @@ def highScoreScreen(score):
     today_date = datetime.date.today().strftime("%m %d %Y")
     if ind>=0:
         fix_initials(hsList,("###",score,today_date), ind)
-        #there's a bug after this point, somewhere
-        #I can't figure out where though. it doesn't seem to be taking
-        #user input or displaying it
-        #display a cursor
         initials = ""
-        while True:
+        entered = False
+        while not entered:
+            DISPLAYSURF.fill(WHITE)
+            DISPLAYSURF.blit(BACKGROUND,(0,0))
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    if event.unicode.isalpha() and len(initials)<3:
-                        return
-                        initials += event.unicode
                     if event.key==pygame.K_RETURN:
-                        break
+                        entered = True
+                    elif event.key==pygame.K_BACKSPACE:
+                        if len(initials)>0:
+                            initials = initials[:-1]
+                    elif event.unicode.isalpha() and len(initials)<3:
+                        initials += event.unicode
+                elif event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
             counter = 0
             while len(initials)<3:
                 initials+="#"
                 counter+=1
             fix_initials(hsList, (initials.upper(), score, today_date), ind)
-            initials = initials[-counter:]
+            if counter > 0:
+                initials = initials[:-counter]
+            pygame.display.update()
+            fpsClock.tick(FPS)
         #update the list
         #display the scores
         #write the new scores
@@ -281,6 +288,8 @@ def writeScore(score, row):
     x = 10 #start 10 pixels from the left part of the screen
     for z in score[0]:
         #dealing with displaying the score before initials are typed
+        # '#' is a sentinel value - if we come across that, then
+        #we just want to put an "empty letter" there
         if z=="#":
             x+=(HSHEIGHT-5)
         else:
