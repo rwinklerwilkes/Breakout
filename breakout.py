@@ -4,6 +4,7 @@ import math
 import time
 import datetime
 import os
+import random
 #cPickle is used to serialize the high scores
 try:
     import cPickle as pickle
@@ -270,10 +271,8 @@ def highScoreScreen(score):
                 initials = initials[:-counter]
             pygame.display.update()
             fpsClock.tick(FPS)
-        #update the list
-        #display the scores
-        #write the new scores
-        #return
+        hsList = updateScores(hsList,(initials.upper(), score, today_date),ind)
+        writeHighScores(hsList)
     else:
         for x in range(HSROWS):
             writeScore(hsList[x],x)
@@ -354,6 +353,9 @@ def updateScores(high_scores, score, index):
     temp_high_scores.pop()
     return temp_high_scores
 
+#not sure I'm crazy about how this method works
+#it produces correct direction changes 95% of the time
+#the other 5% sucks though
 def blockDirectionChange(ballx, bally, leftBox, topBox, direction):
     blockRect = pygame.Rect(leftBox,topBox,BLOCKWIDTH,BLOCKHEIGHT)
     ballRect = pygame.Rect(ballx,bally,BALLWIDTH,BALLHEIGHT)
@@ -435,7 +437,7 @@ def resetBoard():
     return blocks
 
 def runGame():
-    score = 1000
+    score = 0
     ballImg = pygame.image.load('ball.png')
     bumperImg = pygame.image.load('bumper.png')
     scoreImage = pygame.image.load('score.png')
@@ -443,7 +445,12 @@ def runGame():
     ballx = 320
     bally = 360
     DISPLAYSURF.blit(ballImg, (ballx,bally))
-    direction = 'downleft'
+    #use a random number to tell which way to start the ball off
+    randVal = random.random()
+    if(randVal<=.5):
+        direction = DL
+    else:
+        direction = DR
     start = False
     DISPLAYSURF.blit(BACKGROUND,(0,0))
     #define the beginning ball values
