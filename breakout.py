@@ -89,7 +89,6 @@ def topLeftCoords(blockx,blocky):
     top = blocky*BLOCKHEIGHT + YMARGIN
     return left, top
 
-#this method will someday check to see whether the ball has hit a block
 def hitBlock(ballx, bally, blocks,direction):
     for boxy in range(BLOCKSCOLUMN):
         for boxx in range(BLOCKSROW):
@@ -114,6 +113,7 @@ def topDist(ballRect, blockRect):
 def bottomDist(ballRect, blockRect):
     return math.fabs(blockRect.bottom-ballRect.bottom)
 
+#I commented out the old code just in case I ever wanted to see how I originally designed it
 def gameOver():
     '''
     gameOverFont = pygame.font.Font('freesansbold.ttf',120)
@@ -237,6 +237,7 @@ def fix_initials(hsList, userScore,ind):
         writeScore(x,counter)
         counter+=1
 
+#This method controls the writing of the high scores to the screen
 def highScoreScreen(score):
     DISPLAYSURF.fill(WHITE)
     DISPLAYSURF.blit(BACKGROUND,(0,0))
@@ -252,6 +253,9 @@ def highScoreScreen(score):
             DISPLAYSURF.blit(BACKGROUND,(0,0))
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
+                    #if the user hits enter, accept their high score initials
+                    #if the user hits backspace, delete one initial
+                    #if the user CAN enter more initials, let them
                     if event.key==pygame.K_RETURN:
                         entered = True
                     elif event.key==pygame.K_BACKSPACE:
@@ -280,11 +284,13 @@ def highScoreScreen(score):
     pygame.time.wait(5000)
     return
 
+#This method writes the individual high scores to the screen
 def writeScore(score, row):
     dash = pygame.image.load("Alphabet/dash.png")
     #deal with the initials first
     y = (row+1)*HSMARGIN + row*HSHEIGHT
     x = 10 #start 10 pixels from the left part of the screen
+    #score[0] holds the initials, e.g. AAA
     for z in score[0]:
         #dealing with displaying the score before initials are typed
         # '#' is a sentinel value - if we come across that, then
@@ -297,6 +303,7 @@ def writeScore(score, row):
             x += (HSHEIGHT-5)
     x+=60
     counter = 0
+    #score[1] holds the actual score, e.g. 1430
     for z in str(score[1]):
         number = pygame.image.load(ALPHA[z])
         DISPLAYSURF.blit(number,(x,y))
@@ -306,6 +313,7 @@ def writeScore(score, row):
         x+= (HSHEIGHT-5)*(5-counter)
     x+=30
     #Uppercase because I only have uppercase letters
+    #score[2] holds the date
     for z in score[2].upper():
         if z==' ':
             DISPLAYSURF.blit(dash,(x,y+3))
