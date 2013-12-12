@@ -12,7 +12,7 @@ __author__ = 'Rich'
 
 WHITE = (255,255,255)
 
-def startScreen(DISPLAYSURF):
+def startScreen():
     INTRO = pygame.image.load("Images/breakout_intro.png")
     IND = pygame.image.load("Images/pointer.png")
     START = 0
@@ -56,22 +56,7 @@ def startScreen(DISPLAYSURF):
             DISPLAYSURF.blit(IND,PLACES[position])
         pygame.display.update()
 
-#I commented out the old code just in case I ever wanted to see how I originally designed it
-def gameOver(DISPLAYSURF):
-    '''
-    gameOverFont = pygame.font.Font('freesansbold.ttf',120)
-    gameSurf = gameOverFont.render('Game', True, WHITE)
-    overSurf = gameOverFont.render('Over', True, WHITE)
-    gameRect = gameSurf.get_rect()
-    overRect = overSurf.get_rect()
-    gameRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4)
-    #the +30 will leave 20 pixels between "Game" and "Over"
-    overRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4 + gameRect.height + 30)
-    DISPLAYSURF.blit(gameSurf,gameRect)
-    DISPLAYSURF.blit(overSurf,overRect)
-    pygame.display.update()
-    pygame.time.wait(3000)
-    '''
+def gameOver():
     GAME = pygame.image.load("Images/Game.png")
     OVER = pygame.image.load("Images/over.png")
     game_rect = GAME.get_rect()
@@ -84,7 +69,7 @@ def gameOver(DISPLAYSURF):
     pygame.time.wait(3000)
     return
 
-def drugScreen(DISPLAYSURF):
+def drugScreen():
     #alpha info from:
     #http://stackoverflow.com/questions/12879225/pygame-applying-transparency-to-an-image-with-alpha
     DRUGS = pygame.image.load("Images/drugs.png").convert(24)
@@ -137,7 +122,7 @@ def fix_initials(hsList, userScore,ind):
         counter+=1
 
 #This method controls the writing of the high scores to the screen
-def highScoreScreen(DISPLAYSURF,score):
+def highScoreScreen(score):
     DISPLAYSURF.fill(WHITE)
     DISPLAYSURF.blit(BACKGROUND,(0,0))
     hsList = readHighScores()
@@ -178,13 +163,13 @@ def highScoreScreen(DISPLAYSURF,score):
         writeHighScores(hsList)
     else:
         for x in range(HSROWS):
-            writeScore(DISPLAYSURF,hsList[x],x)
+            writeScore(hsList[x],x)
         pygame.display.update()
-    pygame.time.wait(5000)
+    pygame.time.wait(3000)
     return
 
 #This method writes the individual high scores to the screen
-def writeScore(DISPLAYSURF,score, row):
+def writeScore(score, row):
     dash = pygame.image.load("Alphabet/dash.png")
     #deal with the initials first
     HSHEIGHT = 40 #height in pixels of each letter in the high score

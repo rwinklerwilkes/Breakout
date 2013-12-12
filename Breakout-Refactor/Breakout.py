@@ -10,40 +10,15 @@ try:
 except:
     import pickle
 
-#Dict to match alphanumeric characters to their filenames
-ALPHA = {}
-for x in range(65,91):
-    a = str(chr(x))
-    ALPHA[a] = 'Alphabet/' + a + '.png'
-for x in range(10):
-    ALPHA[str(x)] = 'Alphabet/' + str(x) + '.png'
-
 #this method checks to see whether the ball has hit the bumper
-def hitBumper2(direction):
+def hitBumper(ball,bumper,direction):
     #bumperx is the left coordinate of the bumper
     #ballx is the left coordinate of the ball
-    if BALL.x>=BUMPER.x and (BALL.x<=(BUMPER.x + BUMPER.width) and (direction=='downleft' or direction=='downright')):
+    if ball.x>=bumper.x and (ball.x<=(bumper.x + BUMPERWIDTH) and (direction=='downleft' or direction=='downright')):
         #bally should be approaching from the top, so its y-coordinate will be LESS than the y-coordinate of the bumper
-        if BALL.y-BUMPER.y >=-15 and BALL.y-BUMPER.y<=0:
+        if ball.y-bumper.y >=-15 and ball.y-bumper.y<=0:
             return True
     return False
-
-def hitBumper(ballx, bally,bumperx,bumpery,direction):
-    #bumperx is the left coordinate of the bumper
-    #ballx is the left coordinate of the ball
-    if ballx>=bumperx and (ballx<=(bumperx + BUMPERWIDTH) and (direction=='downleft' or direction=='downright')):
-        #bally should be approaching from the top, so its y-coordinate will be LESS than the y-coordinate of the bumper
-        if bally-bumpery >=-15 and bally-bumpery<=0:
-            return True
-    return False
-
-'''
-def generateBlocks():
-    #the blocks array will be false if it HAS been hit
-    #so, we'll draw it if it's true
-    blocks = [[True for boxx in range(BLOCKSROW)] for boxy in range(BLOCKSCOLUMN)]
-    return blocks
-'''
 
 def generateBlocks():
     #the blocks array will be false if it HAS been hit
@@ -62,8 +37,7 @@ def drawBlocks(blocks):
             b = blocks[boxx][boxy]
             if b.alive:
                 block_img = pygame.image.load(b.img)
-                DISPLAYSURF.blit(block_img,(b.x,b.y))
-    
+                DISPLAYSURF.blit(block_img, (b.x, b.y))
 
 def topLeftCoords(blockx,blocky):
     #blockx should be in the range of 0 to BLOCKSROW
@@ -72,16 +46,16 @@ def topLeftCoords(blockx,blocky):
     top = blocky*BLOCKHEIGHT + YMARGIN
     return left, top
 
-def hitBlock(ballx, bally, blocks,direction):
+def hitBlock(ball, blocks,direction):
     for boxx in range(BLOCKSROW):
         for boxy in range(BLOCKSCOLUMN):
             b = blocks[boxx][boxy]
             if b.alive:
                 left, top = b.x,b.y
                 blockRect = pygame.Rect(left,top,b.width,b.height)
-                ballRect = pygame.Rect(ballx,bally,BALLWIDTH,BALLHEIGHT)
+                ballRect = pygame.Rect(ball.x,ball.y,ball.width,ball.height)
                 if blockRect.colliderect(ballRect):
-                    direction = block_direction_change(ballx,bally,left,top,direction)
+                    direction = block_direction_change(ball,left,top,direction)
                     return boxy,boxx, direction
     return -1,-1, direction
 
@@ -97,40 +71,12 @@ def topDist(ballRect, blockRect):
 def bottomDist(ballRect, blockRect):
     return math.fabs(blockRect.bottom-ballRect.bottom)
 
-#I commented out the old code just in case I ever wanted to see how I originally designed it
-def gameOver():
-    '''
-    gameOverFont = pygame.font.Font('freesansbold.ttf',120)
-    gameSurf = gameOverFont.render('Game', True, WHITE)
-    overSurf = gameOverFont.render('Over', True, WHITE)
-    gameRect = gameSurf.get_rect()
-    overRect = overSurf.get_rect()
-    gameRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4)
-    #the +30 will leave 20 pixels between "Game" and "Over"
-    overRect.midtop = (WINDOWWIDTH / 2, WINDOWHEIGHT/4 + gameRect.height + 30)
-    DISPLAYSURF.blit(gameSurf,gameRect)
-    DISPLAYSURF.blit(overSurf,overRect)
-    pygame.display.update()
-    pygame.time.wait(3000)
-    '''
-    GAME = pygame.image.load("Images/Game.png")
-    OVER = pygame.image.load("Images/over.png")
-    game_rect = GAME.get_rect()
-    game_rect.midtop = (WINDOWWIDTH/2, WINDOWHEIGHT/4)
-    over_rect = OVER.get_rect()
-    over_rect.midtop = (WINDOWWIDTH/2, WINDOWHEIGHT/4 + game_rect.height + 15)
-    DISPLAYSURF.blit(GAME,game_rect)
-    DISPLAYSURF.blit(OVER,over_rect)
-    pygame.display.update()
-    pygame.time.wait(3000)
-    return
-
 #not sure I'm crazy about how this method works
 #it produces correct direction changes 95% of the time
 #the other 5% sucks though
-def block_direction_change(ballx, bally, leftBox, topBox, direction):
+def block_direction_change(ball, leftBox, topBox, direction):
     block_rect = pygame.Rect(leftBox,topBox,BLOCKWIDTH,BLOCKHEIGHT)
-    ball_rect = pygame.Rect(ballx,bally,BALLWIDTH,BALLHEIGHT)
+    ball_rect = pygame.Rect(ball.x,ball.y,ball.width,ball.height)
     #if the ball is going down and to the right
     #it can hit the left or the top
     if direction == DR:
@@ -161,57 +107,70 @@ def block_direction_change(ballx, bally, leftBox, topBox, direction):
             direction = UR
     return direction
 
-def move(ballx, bally, bumperx, bumpery, direction):
-    #returns the x and y positions of the ball, and the direction
+def move(ball, bumper, direction):
+    #returns the direction
     #if the y coordinate of the ball hits the bottom of the screen
     #then the method returns -1
-    if hitBumper(ballx, bally, bumperx, bumpery,direction):
+    if hitBumper(ball,bumper,direction):
         if direction == DR:
             direction = UR
         elif direction == DL:
             direction = UL
     if direction== DR:
-        ballx+=speed
-        bally+=speed
-        if ballx>=620:
+        ball.x+=ball.speed
+        ball.y+=ball.speed
+        if ball.x>=620:
             direction=DL
         #if the y coordinate of the ball is this far, it should be game over
-        elif bally>=460:
+        elif ball.y>=460:
             direction=-1
     elif direction==DL:
-        ballx-=speed
-        bally+=speed
-        if ballx<=-5:
+        ball.x-=ball.speed
+        ball.y+=ball.speed
+        if ball.x<=-5:
             direction=DR
-        elif bally>=460:
+        elif ball.y>=460:
         #if the y coordinate of the ball is this far, it should be game over
             direction=-1
     elif direction== UR:
-        ballx+=speed
-        bally-=speed
-        if ballx>=620:
+        ball.x+=ball.speed
+        ball.y-=ball.speed
+        if ball.x>=620:
             direction=UL
-        elif bally<=-5:
+        elif ball.y<=-5:
             direction=DR
     elif direction== UL:
-        ballx-=speed
-        bally-=speed
-        if ballx<=-5:
+        ball.x-=ball.speed
+        ball.y-=ball.speed
+        if ball.x<=-5:
             direction=UR
-        elif bally<=-5:
+        elif ball.y<=-5:
             direction=DL
-    
-    return ballx, bally, direction
+
+    return direction
 
 def resetBoard():
     blocks = generateBlocks()
     drawBlocks(blocks)
     return blocks
 
+def setup():
+    #add the ball to the screen
+    ball = Shape.Ball(320,360,BALLWIDTH,BALLHEIGHT,pygame.image.load('Images/ball.png'))
+    DISPLAYSURF.blit(BACKGROUND,(0,0))
+    DISPLAYSURF.blit(ball.img, (ball.x,ball.y))
+    #define the beginning bumper values
+    bumper = Shape.Shape(320,430,BUMPERWIDTH,BUMPERHEIGHT,pygame.image.load('Images/bumper.png'))
+    #add the bumper to the screen
+    DISPLAYSURF.blit(bumper.img,(bumper.x,bumper.y))
+    #define the beginning block values
+    blocks = resetBoard()
+    return ball,bumper,blocks
+
 def runGame():
+    ball,bumper,blocks = setup()
     score = 0
-    ballx = 320
-    bally = 360
+    blocksDestroyed = 0
     #use a random number to tell which way to start the ball off
     randVal = random.random()
     if(randVal<=.5):
@@ -219,36 +178,20 @@ def runGame():
     else:
         direction = DR
     start = False
-    DISPLAYSURF.blit(BACKGROUND,(0,0))
+
     #define the beginning ball values
-    ballImg = pygame.image.load('Images/ball.png')
     scoreImage = pygame.image.load('Images/score.png')
     scoreFont = pygame.font.Font('freesansbold.ttf',37)
-    bumperImg = pygame.image.load('Images/bumper.png')
-    #add the ball to the screen
-    DISPLAYSURF.blit(ballImg, (ballx,bally))
-
-    #define the beginning bumper values
-    bumperx = 320
-    bumpery = 430
-    #add the bumper to the screen
-    DISPLAYSURF.blit(bumperImg,(bumperx,bumpery))
-
-    #define the beginning block values
-    blocks = generateBlocks()
-    blocksDestroyed = 0
-    #draw blocks to the screen
-    drawBlocks(blocks)
     
     while True:
         if start:
-            ballx,bally,direction = move(ballx,bally,bumperx,bumpery,direction)
+            direction = move(ball,bumper,direction)
             #if the ball hit the bottom of the screen, game over
             if direction == -1:
-                Screens.gameOver(DISPLAYSURF)
-                Screens.highScoreScreen(DISPLAYSURF, score)
+                Screens.gameOver()
+                Screens.highScoreScreen(score)
                 return
-            blockHitY, blockHitX, direction = hitBlock(ballx,bally,blocks,direction)
+            blockHitY, blockHitX, direction = hitBlock(ball,blocks,direction)
             if blockHitX>=0 and blockHitY>=0:
                 blocks[blockHitX][blockHitY].alive = False
                 blocksDestroyed+=1
@@ -268,17 +211,17 @@ def runGame():
                 tempx, tempy = pygame.mouse.get_pos()
                 #if it's less than 63 or greater than 578, don't let it run off the screen
                 if tempx <= BUMPERWIDTH/2:
-                    bumperx = -2
+                    bumper.x = -2
                 elif tempx >= WINDOWWIDTH - (BUMPERWIDTH/2):
-                    bumperx = 520
+                    bumper.x = 520
                 #the 63 centers it - the sprite is approximately 125 pixels wide
                 else:
-                    bumperx = tempx-(BUMPERWIDTH/2)
+                    bumper.x = tempx-(BUMPERWIDTH/2)
         
         DISPLAYSURF.fill(WHITE)
         DISPLAYSURF.blit(BACKGROUND,(0,0))
-        DISPLAYSURF.blit(bumperImg,(bumperx,bumpery))
-        DISPLAYSURF.blit(ballImg, (ballx,bally))
+        DISPLAYSURF.blit(bumper.img,(bumper.x,bumper.y))
+        DISPLAYSURF.blit(ball.img, (ball.x,ball.y))
         DISPLAYSURF.blit(scoreImage, (440,20))
         scoreSurface = scoreFont.render(str(score), True, WHITE)
         scoreRect = scoreSurface.get_rect()
@@ -290,13 +233,10 @@ def runGame():
 
 def main():
     pygame.init()
-    global speed
-    speed = 5
-    Screens.drugScreen(DISPLAYSURF)
+    Screens.drugScreen()
     while True:
-        Screens.startScreen(DISPLAYSURF)
+        Screens.startScreen()
         runGame()
-    
 
 if __name__ == '__main__':
     main()

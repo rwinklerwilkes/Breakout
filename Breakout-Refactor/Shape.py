@@ -9,7 +9,7 @@ class Shape:
         self.img = img
 
 class Ball(Shape):
-    def __init__(self,x_cor,y_cor,width,height,img,speed):
+    def __init__(self,x_cor,y_cor,width,height,img,speed = 5):
         super().__init__(x_cor,y_cor,width,height,img)
         self.speed = speed
 

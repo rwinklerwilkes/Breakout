@@ -41,3 +41,11 @@ UL = 'upleft'
 #set the FPS
 FPS = 30
 fpsClock = pygame.time.Clock()
+
+#Dict to match alphanumeric characters to their filenames
+ALPHA = {}
+for x in range(65,91):
+    a = str(chr(x))
+    ALPHA[a] = 'Alphabet/' + a + '.png'
+for x in range(10):
+    ALPHA[str(x)] = 'Alphabet/' + str(x) + '.png'
